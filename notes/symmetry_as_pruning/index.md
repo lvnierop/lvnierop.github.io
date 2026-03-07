@@ -1,5 +1,5 @@
 ---
-layout: page
+layout: base
 title: Symmetries and pruning in neural networks
 nav_exclude: true
 ---
@@ -23,14 +23,18 @@ Secondly, the training phase can be made more efficient, because the identity bl
 
 ### An explicit realization in transformers
 
-In the transformer architecture, the attention is calculated using the product of the key and query matrices. Importantly, there is no activation on the key and query calculations, so we can insert the identity matrix in the form $M^{-1}M$, with M an arbitrary invertible $d_head\times d_head$ matrix. We can then apply them to the left and right, getting the following mapping:
-$$
-K^h = W_k^h X, \\ 
-\hat K^h = (M^h W_k^h) X = \hat W_k^h X, \\ 
-Q^h = W_q^h X, \\ 
-\hat Q^h = (((M^h)^{-1})^T W_q^h) X = \hat W_q^h X 
-$$
+In the transformer architecture, the attention is calculated using the product of the key and query matrices. Importantly, there is no activation on the key and query calculations, so we can insert the identity matrix in the form $M^{-1}M$, with M an arbitrary invertible $d_{head}\times d_{head}$ matrix. We can then apply them to the left and right, getting the following mapping:
+
+$$ K^h = W_k^h X,$$ 
+
+$$ \hat K^h = (M^h W_k^h) X = \hat W_k^h X,$$ 
+
+$$Q^h = W_q^h X,$$
+
+$$\hat Q^h = (((M^h)^{-1})^T W_q^h) X = \hat W_q^h X$$
+
 Invariance follows because those weights only enter in the combination
+
 $$
 (\hat Q^h)^T \hat K^h = X^T (W_q^h)^T (M^h)^{-1} M^h W_k^h X = X^T (W_q^h)^T W_k^h X = (Q^h)^T K^h
 $$
@@ -44,7 +48,7 @@ First, we need a trained model. I used the basic no-gpu instructions:
 python train.py config/train_shakespeare_char.py --device=cpu --compile=False --eval_iters=20 --log_interval=1 --block_size=64 --batch_size=12 --n_layer=4 --n_head=4 --n_embd=128 --max_iters=2000 --lr_decay_iters=2000 --dropout=0.0
 ```
 
-Next, we create 3 new model checkpoints based off the checkpoint created by this file. One of them applies a random invariant transformation to each head as specified above. Another one applies a random transformation to the keys and values independently (without imposing the inverse transpose relationship). A third one applies a symmetry transformation that explicitly inverts the first ($d_{head}\times d_{head}$) block of each head's key projection, rather than picking the matrix at random. All this is done with the command:
+Next, we create 3 new model checkpoints based off the checkpoint created by this file. One of them applies a random invariant transformation to each head as specified above. Another one applies a random transformation to the keys and values independently (without imposing the inverse transpose relationship). A third one applies a symmetry transformation that explicitly inverts the first $(d_{head}\times d_{head})$ block of each head's key projection, rather than picking the matrix at random. All this is done with the command:
 ```sh
 python key_value_rotations.py
 ```
@@ -59,15 +63,15 @@ python compare_chkpts.py /path/to/checkpoint_dir /path/to/other_dir
 
 |base model | comparison model            | diff max | diff mean|
 | --- |-----------------------------| --- | --- |
-|out-shakespeare-char| out-shakespeare-char-gauged |||
-|out-shakespeare-char| out-shakespeare-char-fixed  |||
-|out-shakespeare-char| out-shakespeare-char-random |||
+|out-shakespeare-char| out-shakespeare-char-gauged |3.6955e-05|6.1509e-06|
+|out-shakespeare-char| out-shakespeare-char-gauge-fixed  |9.4414e-05|2.6329e-05|
+|out-shakespeare-char| out-shakespeare-char-random |5.9480|1.9566|
 
 This clearly shows that the idea of gauge transformations works as expected. We do see slightly higher changes on the gauge fixed version (where we set a block to the identity). This comes from the inverse typically requireing some large-ish eigenvalues compared to a random transformation. That causes larger cutoffs on the float precision, leading to slightly larger output differences (although still negligible compared to the random change).
 
 ### Implementing an identity block passthrough
 
-An alternative attention calculation is done in model.py line 19, skipping the first $n_head$ columns of the key matrix. The key projection is created by concatenating the first $d_head$ entries of X and the output of the smaller projection matrix applied to X. To benchmark the forward pass I ran 
+An alternative attention calculation is done in model.py line 19, skipping the first $n_{head}$ columns of the key matrix. The key projection is created by concatenating the first $d_{head}$ entries of X and the output of the smaller projection matrix applied to X. To benchmark the forward pass I ran 
 ```sh 
 python bench_attn.py
 ```
