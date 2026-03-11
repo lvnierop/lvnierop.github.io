@@ -1,10 +1,11 @@
 ---
 layout: base
-title: Symmetries and parameter reduction in neural networks
+title: Gauge Symmetry in Transformer Attention
 nav_exclude: true
+date: 2026-03-11
 ---
 
-## Symmetries and parameter reduction in neural networks
+## Gauge Symmetry in Transformer Attention
 
 ### Summary
 
