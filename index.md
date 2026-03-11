@@ -5,7 +5,7 @@ title: Home
 
 <div style="display: flex; align-items: flex-start; gap: 24px;">
 
-  <img src="/assets/leo.jpg"
+  <img src="/assets/images/leo.jpg"
        alt="Leo van Nierop"
        style="width: 180px; border-radius: 8px;">
 
