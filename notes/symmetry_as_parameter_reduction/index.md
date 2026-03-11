@@ -6,6 +6,12 @@ nav_exclude: true
 
 ## Symmetries and parameter reduction in neural networks
 
+### Summary
+
+Neural networks over-parametrize the functions they try to approximate. This is necessary in part to have a rich enough loss landscape to reach a good minimum. However, some over-parametrization is pure redundancy causing computational overhead without training benefits. As an example, the attention mechanism multiplies the linear projections for keys and queries, which leaves an arbitrary $SL(n_{head})$ transformation freedom on the keys with the inverse on the queries to transfer parameters between the two projections. I show that this freedom can be used to remove part of the key matrix to reduce the total parameters in the model. This leads to faster training on cpu, but on gpu the gains are countered by overhead required to stitch the tensors together (this is implementation dependend, potentially fixable). The choice to reduce the key matrix is arbitrary, the same argument could be made to reduce the query matrix (but not both at the same time).
+
+### Introduction
+
 In this note I explore how symmetries of a neural network architecture can be used to reduce the parameter count, while leaving the model invariant. As a practical example, I will use a very explicit symmetry of the transformer architecture, and I am implementing my experiments in Kaparthy's nanoGPT, in this [fork](https://github.com/lvnierop/nanoGPT).
 
 First I will define my terms for clarity: I want to avoid misunderstandings due to different terminology in math, physics, and computer science. 
@@ -79,7 +85,20 @@ Unfortunately, this implementation does not actually give any speed increase (ac
 
 ### Training with the identity block passthrough
 
-In order to test training gains, I ran training on [this commit](https://github.com/lvnierop/nanoGPT/commit/35c4c43e990e9860b041c001dcaf7b1478863af1). I trained shakespeare-char on cpu and gpu, with and without the passthrough blocks enabled. Note that the model settings are the default choices in Kaparthy's readme for the given devices
+In order to test training gains, I ran training on [this commit](https://github.com/lvnierop/nanoGPT/commit/35c4c43e990e9860b041c001dcaf7b1478863af1). I trained shakespeare-char on cpu and gpu, with and without the passthrough blocks enabled. Note that the model settings are the default choices in Kaparthy's readme for the given devices: 
+
+
+| device | parameter | value |
+| --- | --- | --- |
+| cpu | layers | 4 |
+|  | heads | 4 |
+|  | Embedding | 128 |
+|  | Block size | 64 |
+| gpu | layers | 6 |
+|  | heads | 6 |
+|  | Embedding | 384 |
+|  | Block size | 256 |
+
 
 | config | device | train_time | val_loss |
 | --- | --- | --- |
