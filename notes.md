@@ -9,6 +9,8 @@ Initial results on gauge-like symmetry in Transformers coming soon.
 
 
 ## Topics
+
+<!--  Hiding to debug
 - [Gauge Symmetry in Transformer Attention](./symmetry_as_parameter_reduction/)
 
 <!--
